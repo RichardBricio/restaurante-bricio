@@ -1,20 +1,17 @@
 version: '3.8'
 
 services:
-  # Banco de dados PostgreSQL
   postgres:
     image: postgres:15-alpine
     container_name: restaurante_postgres
     environment:
-      POSTGRES_DB: restaurante_boomer
+      POSTGRES_DB: restaurante_bricio
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_ROOT_PASSWORD: password
+      POSTGRES_PASSWORD: admin
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d
     networks:
       - restaurante_network
     healthcheck:
@@ -23,7 +20,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backend Spring Boot
   backend:
     build:
       context: ./backend
@@ -33,11 +29,10 @@ services:
       - "3333:3333"
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurante_boomer
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/restaurante_bricio
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      UNSPLASH_ACCESS_KEY: ${UNSPLASH_ACCESS_KEY}
-      MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
+      SPRING_DATASOURCE_PASSWORD: admin
+      MERCADOPAGO_ACCESS_TOKEN: APP_USR-2340588140879621-040114-b213ead52ad6bcb0363d98b7ea33f909-118203676
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,7 +40,6 @@ services:
       - restaurante_network
     restart: unless-stopped
 
-  # Frontend React
   frontend:
     build:
       context: ./frontend
@@ -55,30 +49,11 @@ services:
       - "5173:5173"
     environment:
       VITE_API_URL: http://localhost:3333/api
-      VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY}
-      VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN}
-      VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID}
-      VITE_FIREBASE_STORAGE_BUCKET: ${VITE_FIREBASE_STORAGE_BUCKET}
-      VITE_FIREBASE_MESSAGING_SENDER_ID: ${VITE_FIREBASE_MESSAGING_SENDER_ID}
-      VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID}
     depends_on:
       - backend
     networks:
       - restaurante_network
     restart: unless-stopped
-
-  # Adminer (gerenciamento do banco - opcional)
-  adminer:
-    image: adminer:latest
-    container_name: restaurante_adminer
-    ports:
-      - "8080:8080"
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-    networks:
-      - restaurante_network
-    profiles:
-      - tools
 
 networks:
   restaurante_network:
